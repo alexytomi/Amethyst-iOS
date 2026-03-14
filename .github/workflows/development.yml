@@ -19,7 +19,7 @@ jobs:
           - platform: 2
             platform_name: ios
     
-    runs-on: J316sAP
+    runs-on: macos-latest
     steps:
       - name: Remove work folders
         run: |
@@ -35,6 +35,12 @@ jobs:
 
       - name: Checkout repository submodules
         run: git submodule update --init --recursive
+
+      # Java has to be installed this way to be compatible with /usr/libexec/java_home
+      - name: Get dependencies
+        run: |
+          brew install make cmake ldid wget lld
+          brew install --cask zulu@8
 
       - name: Get gl4es latest commit hash
         id: gl4es-sha
@@ -94,6 +100,9 @@ jobs:
             # Build ipa only for everything else
             gmake -j$(sysctl -n hw.ncpu) dsym package PLATFORM=${{ matrix.platform }}
           fi
+      - name: Setup tmate session if failed
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
       - name: Upload regular ipa
         uses: actions/upload-artifact@main
